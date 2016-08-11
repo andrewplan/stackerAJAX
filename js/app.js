@@ -54,7 +54,7 @@ var getUnanswered = function(tags) {
 		tagged: tags,
 		site: 'stackoverflow',
 		order: 'desc',
-        sort: 'score'
+        sort: 'creation'
 	};
 	
 	$.ajax({
@@ -88,22 +88,22 @@ var showAnswerer = function(theAnswerer) {
     
     //set display name and user ID of answerer
     var answererIds = result.find('.answerer-ids');
-	answererIds.html('<p>Name: <a target="_blank" '+
+	answererIds.html('<a target="_blank" '+
 		'href=http://stackoverflow.com/users/' + theAnswerer.user.user_id + ' >' +
 		theAnswerer.user.display_name +
-		'</a></p>' + '<img src=' + theAnswerer.user.profile_image +'/>');
+		'</a><br/>' + '<img src=' + theAnswerer.user.profile_image +'/>');
     
     //set reputation property
     var reputation = result.find('.reputation');
-    reputation.html(' ' + theAnswerer.user.reputation);
+    reputation.text(' ' + theAnswerer.user.reputation);
     
     //set score property
     var score = result.find('.score');
-    score.html(' ' + theAnswerer.score);
+    score.text(' ' + theAnswerer.score);
     
     //set post_count property
     var postCount = result.find('.post-count');
-    postCount.html(' ' + theAnswerer.post_count);
+    postCount.text(' ' + theAnswerer.post_count);
     
     return result;
 };
@@ -115,29 +115,28 @@ var showSearchResults = function(query, resultNum) {
 };
 
 //similar to above ajax function, but gets top answerers
-var getTopAnswerers = function(tags) {
+var getTopAnswerers = function(tag) {
 	//parameters needed to pass into StackOverflow's API
 	var request = { 
-		tagged: tags,
+		tag: tag,
 		site: 'stackoverflow',
-        order: 'desc',
-		sort: 'score',
+        period: 'all_time'
 	};
     
     $.ajax({
-		url: "http://api.stackexchange.com/2.2/tags/{tags}/top-answerers/all_time",
+		url: "http://api.stackexchange.com/2.2/tags/" + request.tag + "/top-answerers/" + request.period,
 		data: request,
 		dataType: "jsonp",
 		type: "GET",
 	})
     .done(function(result){ //this waits for the ajax to return with a succesful promise object
         console.log(result);
-		var searchResults = showSearchResults(request.tagged, result.items.length);
+		var searchResults = showSearchResults(request.tag, result.items.length);
 
 		$('.search-results').html(searchResults);
+        
 		//$.each is a higher order function. It takes an array and a function as an argument.
 		//The function is executed once for each item in the array.
-        
 		$.each(result.items, function(i, item) {
 			var answerer = showAnswerer(item);
 			$('.results').append(answerer);
@@ -154,7 +153,7 @@ $(document).ready( function() {
 	$('.unanswered-getter').submit( function(e){
 		e.preventDefault();
 		// zero out results if previous search has run
-		$('.results').html('');
+		$('.results').html(" ");
 		// get the value of the tags the user submitted
 		var tags = $(this).find("input[name='tags']").val();
 		getUnanswered(tags);
@@ -166,7 +165,7 @@ $(document).ready( function() {
 		// zero out results if previous search has run
 		$('.results').html('');
 		// get the value of the tags the user submitted
-		var tags = $(this).find("input[name='answerers']").val();
-		getTopAnswerers(tags);
+		var tag = $(this).find("input[name='answerers']").val();
+		getTopAnswerers(tag);
 	});
 });
