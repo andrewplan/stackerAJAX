@@ -119,12 +119,11 @@ var getTopAnswerers = function(tag) {
 	//parameters needed to pass into StackOverflow's API
 	var request = { 
 		tag: tag,
-		site: 'stackoverflow',
-        period: 'all_time'
+		site: 'stackoverflow'
 	};
     
     $.ajax({
-		url: "http://api.stackexchange.com/2.2/tags/" + request.tag + "/top-answerers/" + request.period,
+		url: "http://api.stackexchange.com/2.2/tags/" + encodeURIComponent(tag) + "/top-answerers/all_time",
 		data: request,
 		dataType: "jsonp",
 		type: "GET",
