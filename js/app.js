@@ -27,7 +27,6 @@ var showQuestion = function(question) {
 		'</a></p>' +
 		'<p>Reputation: ' + question.owner.reputation + '</p>'
 	);
-
 	return result;
 };
 
@@ -55,7 +54,7 @@ var getUnanswered = function(tags) {
 		tagged: tags,
 		site: 'stackoverflow',
 		order: 'desc',
-		sort: 'creation'
+        sort: 'score'
 	};
 	
 	$.ajax({
@@ -81,6 +80,75 @@ var getUnanswered = function(tags) {
 	});
 };
 
+//takes object of top answerers pulled from StackOverflow and returns new result to append to DOM.  
+var showAnswerer = function(theAnswerer) {
+	
+	//clones template display code for top answerers results
+	var result = $('.templates .answerer').clone();
+    
+    //set display name and user ID of answerer
+    var answererIds = result.find('.answerer-ids');
+	answererIds.html('<p>Name: <a target="_blank" '+
+		'href=http://stackoverflow.com/users/' + theAnswerer.user.user_id + ' >' +
+		theAnswerer.user.display_name +
+		'</a></p>' + '<img src=' + theAnswerer.user.profile_image +'/>');
+    
+    //set reputation property
+    var reputation = result.find('.reputation');
+    reputation.html(' ' + theAnswerer.user.reputation);
+    
+    //set score property
+    var score = result.find('.score');
+    score.html(' ' + theAnswerer.score);
+    
+    //set post_count property
+    var postCount = result.find('.post-count');
+    postCount.html(' ' + theAnswerer.post_count);
+    
+    return result;
+};
+
+//takes the object of top answerers and returns the number of returned answerers and appends that figure to DOM
+var showSearchResults = function(query, resultNum) {
+	var results = 'These are the top ' + resultNum + ' answerers for <strong>' + query + '</strong>:';
+	return results;
+};
+
+//similar to above ajax function, but gets top answerers
+var getTopAnswerers = function(tags) {
+	//parameters needed to pass into StackOverflow's API
+	var request = { 
+		tagged: tags,
+		site: 'stackoverflow',
+        order: 'desc',
+		sort: 'score',
+	};
+    
+    $.ajax({
+		url: "http://api.stackexchange.com/2.2/tags/{tags}/top-answerers/all_time",
+		data: request,
+		dataType: "jsonp",
+		type: "GET",
+	})
+    .done(function(result){ //this waits for the ajax to return with a succesful promise object
+        console.log(result);
+		var searchResults = showSearchResults(request.tagged, result.items.length);
+
+		$('.search-results').html(searchResults);
+		//$.each is a higher order function. It takes an array and a function as an argument.
+		//The function is executed once for each item in the array.
+        
+		$.each(result.items, function(i, item) {
+			var answerer = showAnswerer(item);
+			$('.results').append(answerer);
+		});
+	})
+    .fail(function(jqXHR, error){ //this waits for the ajax to return with an error promise object
+		var errorElem = showError(error);
+		$('.search-results').append(errorElem);
+	});
+};
+//.fail with event handler that will show error message as an appended element in search-results
 
 $(document).ready( function() {
 	$('.unanswered-getter').submit( function(e){
@@ -90,5 +158,15 @@ $(document).ready( function() {
 		// get the value of the tags the user submitted
 		var tags = $(this).find("input[name='tags']").val();
 		getUnanswered(tags);
+	});
+    
+    //code to execute ajax request for top answerers upon submit of form
+    $('.inspiration-getter').submit( function(e){
+		e.preventDefault();
+		// zero out results if previous search has run
+		$('.results').html('');
+		// get the value of the tags the user submitted
+		var tags = $(this).find("input[name='answerers']").val();
+		getTopAnswerers(tags);
 	});
 });
